@@ -43,7 +43,7 @@ class AbstractNet:
     LEGACY_POW_RETARGET_BLOCKS = LEGACY_POW_TARGET_TIMESPAN // LEGACY_POW_TARGET_INTERVAL  # 2016 blocks
     BASE_UNITS = {'BCH': 8, 'mBCH': 5, 'bits': 2}
     DEFAULT_UNIT = "BCH"
-    SLP_PREFLIGHT_CHECK = True  # pings other node implementations in the slp network before signing
+    SLP_PREFLIGHT_CHECK = False  # pings other node implementations in the slp network before signing
 
 
 class MainNet(AbstractNet):
