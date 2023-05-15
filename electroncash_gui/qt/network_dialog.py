@@ -662,6 +662,59 @@ class SlpSLPDBServeListWidget(QTreeWidget):
         #h.setSectionResizeMode(1, QHeaderView.ResizeToContents)
 
 
+class SlpVerdeServeListWidget(QTreeWidget):
+    def __init__(self, parent):
+        QTreeWidget.__init__(self)
+        self.parent = parent
+        self.network = parent.network
+        self.setHeaderLabels([_('Verde Server')]) #, _('Server Status')])
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.create_menu)
+
+    def create_menu(self, position):
+        item = self.currentItem()
+        if not item:
+            return
+        menu = QMenu()
+        server = item.data(0, Qt.UserRole)
+        menu.addAction(_("Remove"), lambda: self.update_slp_verde_server(server, remove=True))
+        menu.exec_(self.viewport().mapToGlobal(position))
+
+    def update_slp_verde_server(self, server, add=False, remove=False):
+        self.parent.update_slp_verde_server(server, add, remove)
+        self.update()
+
+    def keyPressEvent(self, event):
+        if event.key() in [ Qt.Key_F2, Qt.Key_Return ]:
+            item, col = self.currentItem(), self.currentColumn()
+            if item and col > -1:
+                self.on_activated(item, col)
+        else:
+            QTreeWidget.keyPressEvent(self, event)
+
+    def on_activated(self, item, column):
+        # on 'enter' we show the menu
+        pt = self.visualItemRect(item).bottomLeft()
+        pt.setX(50)
+        self.customContextMenuRequested.emit(pt)
+
+    def update(self):
+        self.clear()
+        self.addChild = self.addTopLevelItem
+        slp_verde_list = slp_gs_mgr.verde_host
+        slp_verde_count = len(slp_verde_list)
+        for k in slp_verde_list:
+            if slp_verde_count > 0:
+                x = QTreeWidgetItem([k]) #, 'NA'])
+                x.setData(0, Qt.UserRole, k)
+                # x.setData(1, Qt.UserRole, k)
+                self.addTopLevelItem(x)
+        h = self.header()
+        h.setStretchLastSection(False)
+        h.setSectionResizeMode(0, QHeaderView.Stretch)
+        #h.setSectionResizeMode(1, QHeaderView.ResizeToContents)
+
+
 class PostOfficeServeListWidget(QTreeWidget):
     def __init__(self, parent):
         QTreeWidget.__init__(self)
@@ -951,10 +1004,10 @@ class NetworkChoiceLayout(QObject, PrintError):
         grid.addLayout(hbox, 5, 0)
 
         # SLP SLPDB Validation
-        self.slp_slpdb_enable_cb = QCheckBox(_('Use SLPDB to validate your tx'))
+        self.slp_slpdb_enable_cb = QCheckBox(_('Use SLPDB'))
         self.slp_slpdb_enable_cb.clicked.connect(self.slpdb_msg_box)
         self.slpdb_is_checked()
-        grid.addWidget(self.slp_slpdb_enable_cb, 0, 1, 1, 3)
+        grid.addWidget(self.slp_slpdb_enable_cb, 0, 1)
 
         hbox = QHBoxLayout()
         self.slpdb_server_label = QLabel(_('Server') + ':')
@@ -986,15 +1039,58 @@ class NetworkChoiceLayout(QObject, PrintError):
         grid.addWidget(self.slider_ticker, 3, 1)
         self.slp_slider.valueChanged.connect(self.value_change)
 
+        # SLP Verde Validation
+        self.slp_verde_enable_cb = QCheckBox(_('Use Verde'))
+        self.slp_verde_enable_cb.clicked.connect(self.verde_msg_box)
+        self.verde_is_checked()
+        grid.addWidget(self.slp_verde_enable_cb, 0, 2)
+
+        hbox = QHBoxLayout()
+        self.verde_server_label = QLabel(_('Server') + ':')
+        hbox.addWidget(self.verde_server_label)
+        self.slp_verde_server_host = QLineEdit()
+        self.slp_verde_server_host.setFixedWidth(240)
+        hbox.addWidget(self.slp_verde_server_host)
+        hbox.addStretch(1)
+        grid.addLayout(hbox, 1, 0)
+
+        self.slp_verde_list_widget = SlpVerdeServeListWidget(self)
+        grid.addWidget(self.slp_verde_list_widget, 2, 0, 1, 5)
+        self.slp_verde_list_widget.update()
+        self.verde_enter_amount_label = QLabel(_("Enter Acceptable Number of Successful Results:"))
+        grid.addWidget(self.verde_enter_amount_label, 3, 0)
+
+        self.add_verde_server_button = QPushButton("Add Endpoint")
+        self.add_verde_server_button.setFixedWidth(130)
+        self.add_verde_server_button.clicked.connect(lambda: self.verde_endpoint_msg_box())
+        self.add_verde_server_button.setContentsMargins(10, 0, 0, 0)
+        grid.addWidget(self.add_verde_server_button, 1, 1, 1, 1)
+
+        self.slp_slider_verde = QSlider(Qt.Horizontal)
+        self.slp_slider_verde.setValue(slp_gs_mgr.verde_confirmations)
+        self.slp_slider_verde.setMaximum(len(slp_gs_mgr.verde_host))
+        self.slp_slider_verde.setMinimum(1)
+        grid.addWidget(self.slp_slider_verde, 4, 0, 1, 5)
+        self.slider_ticker_verde = QLabel(str(slp_gs_mgr.verde_confirmations))
+        grid.addWidget(self.slider_ticker_verde, 3, 1)
+        self.slp_slider_verde.valueChanged.connect(self.value_change)
+
         if self.slp_gs_enable_cb.isChecked():
             self.hide_slpdb_widgets()
+            self.hide_verde_widgets()
             self.show_gs_widgets()
         elif self.slp_slpdb_enable_cb.isChecked():
             self.hide_gs_widgets()
+            self.hide_verde_widgets()
             self.show_slpdb_widgets()
-        elif not self.slp_gs_enable_cb.isChecked() and not self.slp_slpdb_enable_cb.isChecked():
+        elif self.slp_verde_enable_cb.isChecked():
             self.hide_gs_widgets()
             self.hide_slpdb_widgets()
+            self.show_verde_widgets()
+        elif not self.slp_gs_enable_cb.isChecked() and not self.slp_slpdb_enable_cb.isChecked() and not self.slp_verde_enable_cb.isChecked():
+            self.hide_gs_widgets()
+            self.hide_slpdb_widgets()
+            self.hide_verde_widgets()
 
         # Post Office  Tab
         grid = QGridLayout(post_office_tab)
@@ -1153,17 +1249,42 @@ class NetworkChoiceLayout(QObject, PrintError):
         self.slpdb_server_label.show()
         self.slpdb_enter_amount_label.show()
 
+    def hide_verde_widgets(self):
+        self.slp_verde_server_host.hide()
+        self.slp_verde_list_widget.hide()
+        self.add_verde_server_button.hide()
+        self.slp_slider_verde.hide()
+        self.slider_ticker_verde .hide()
+        self.verde_server_label.hide()
+        self.verde_enter_amount_label.hide()
+
+    def show_verde_widgets(self):
+        self.slp_verde_server_host.show()
+        self.slp_verde_list_widget.show()
+        self.add_verde_server_button.show()
+        self.slp_slider_verde.show()
+        self.slider_ticker_verde.show()
+        self.verde_server_label.show()
+        self.verde_enter_amount_label.show()
+
     def value_change(self):
-            amount = self.slp_slider.value()
-            slp_gs_mgr.set_slpdb_confirmations(amount)
-            self.slider_ticker.setText(str(amount))
+            if self.slp_slpdb_enable_cb.isChecked():
+                amount = self.slp_slider.value()
+                slp_gs_mgr.set_slpdb_confirmations(amount)
+                self.slider_ticker.setText(str(amount))
+            elif self.slp_verde_enable_cb.isChecked():
+                amount = self.slp_slider_verde.value()
+                slp_gs_mgr.set_verde_confirmations(amount)
+                self.slider_ticker_verde.setText(str(amount))
 
     def use_slp_gs(self):
         slp_gs_mgr.toggle_graph_search(self.slp_gs_enable_cb.isChecked())
         self.slp_slpdb_enable_cb.setChecked(False)
+        self.slp_verde_enable_cb.setChecked(False)
         self.slp_gs_list_widget.update()
         if self.slp_gs_enable_cb.isChecked():
             self.hide_slpdb_widgets()
+            self.hide_verde_widgets()
             self.show_gs_widgets()
         else:
             self.hide_gs_widgets()
@@ -1189,6 +1310,7 @@ class NetworkChoiceLayout(QObject, PrintError):
             if return_value == QMessageBox.Ok:
                 # Enable slpdb validation on confirm, else uncheck the box
                 self.slp_gs_enable_cb.setChecked(False)
+                self.slp_verde_enable_cb.setChecked(False)
                 self.use_slp_slpdb()
             else:
                 self.slp_slpdb_enable_cb.setChecked(False)
@@ -1208,6 +1330,48 @@ class NetworkChoiceLayout(QObject, PrintError):
             return
 
         self.slp_slpdb_enable_cb.setChecked(False)
+
+    def verde_msg_box(self):
+        # Msg box should only appear if the checkbox is enabled
+        if self.slp_verde_enable_cb.isChecked():
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Information)
+            msg.setWindowTitle("Verde Validation")
+            msg.setText("Warning!")
+            msg.setInformativeText(
+                "This is not a trustless validation. You are trusting the "
+                + "result of the servers listed. \n(This disables graph "
+                + "search if enabled)")
+            msg.setDetailedText(
+                "Currently NFTs do not always validate through the graph search, "
+                + "using Verde will validate the transactions quickly, at the "
+                + "tradeoff of trusting the servers listed."
+                )
+            msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+            return_value = msg.exec()
+            if return_value == QMessageBox.Ok:
+                # Enable verde validation on confirm, else uncheck the box
+                self.slp_gs_enable_cb.setChecked(False)
+                self.slp_slpdb_enable_cb.setChecked(False)
+                self.use_slp_verde()
+            else:
+                self.slp_verde_enable_cb.setChecked(False)
+        else:
+            self.hide_verde_widgets()
+            slp_gs_mgr.toggle_verde_validation(False)
+
+    def verde_is_checked(self):
+
+        if self.config.get('slp_validator_verde_validation_enabled', False):
+
+            if self.config.get('slp_validator_graphsearch_enabled', False):
+
+                self.gs_and_slpdb_checked_msg_box()
+
+            self.slp_verde_enable_cb.setChecked(True)
+            return
+
+        self.slp_verde_enable_cb.setChecked(False)
 
     def is_url(self, url):
         try:
@@ -1248,7 +1412,40 @@ class NetworkChoiceLayout(QObject, PrintError):
             if return_value == QMessageBox.Ok:
                 return
 
-    # Obsolete
+
+    def verde_endpoint_msg_box(self):
+        if self.is_url(self.slp_verde_server_host.text()):
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Information)
+            msg.setWindowTitle("Add Verde Endpoint")
+            msg.setInformativeText(
+                "Are you sure you want to add this endpoint?\n"
+                + self.slp_verde_server_host.text()
+            )
+            msg.setDetailedText(
+                "Currently NFTs do not always validate through the graph search, "
+                + "using Verde will validate the transactions quickly, at the "
+                + "tradeoff of trusting the servers listed."
+            )
+            msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+            return_value = msg.exec()
+            if return_value == QMessageBox.Ok:
+                self.update_slp_verde_server(server=self.slp_verde_server_host.text(), add=True)
+            else:
+                return
+        else:
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Critical)
+            msg.setWindowTitle("Error")
+            msg.setText(
+                "URL is not in correct format."
+            )
+            msg.setStandardButtons(QMessageBox.Ok)
+            return_value = msg.exec()
+            if return_value == QMessageBox.Ok:
+                return
+
+    # Obsolete  # todo verde
     def gs_and_slpdb_checked_msg_box(self):
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Information)
@@ -1278,7 +1475,15 @@ class NetworkChoiceLayout(QObject, PrintError):
         slp_gs_mgr.toggle_slpdb_validation(self.slp_slpdb_enable_cb.isChecked())
         self.slp_slpdb_list_widget.update()
         self.hide_gs_widgets()
+        self.hide_verde_widgets()
         self.show_slpdb_widgets()
+
+    def use_slp_verde(self):
+        slp_gs_mgr.toggle_verde_validation(self.slp_verde_enable_cb.isChecked())
+        self.slp_verde_list_widget.update()
+        self.hide_gs_widgets()
+        self.hide_slpdb_widgets()
+        self.show_verde_widgets()
 
     _tor_client_names = {
         TorController.BinaryType.MISSING: _('Tor'),
@@ -1548,6 +1753,14 @@ class NetworkChoiceLayout(QObject, PrintError):
         self.slp_slider.setMaximum(len(slp_gs_mgr.slpdb_host))
 
         self.slp_slpdb_list_widget.update()
+
+    def update_slp_verde_server(self, server=None, add=False, remove=False):
+        if not server:
+            return
+        slp_gs_mgr.update_verde_host(server, add, remove)
+        self.slp_slider_verde.setMaximum(len(slp_gs_mgr.verde_host))
+
+        self.slp_verde_list_widget.update()
 
     def set_slp_post_office_enabled(self):
         active = self.use_post_office.isChecked()

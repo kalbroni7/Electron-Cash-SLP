@@ -257,6 +257,52 @@ class _SlpGraphSearchManager:
     def set_slpdb_confirmations(self, amount):
         simple_config.config.set_key('slp_validator_slpdb_confirmations', amount)
 
+    @property
+    def verde_validation_enabled(self):
+        return simple_config.config.get('slp_validator_verde_validation_enabled', False)
+
+    def _set_verde_validation_enabled(self, enable):
+        simple_config.config.set_key('slp_validator_verde_validation_enabled', enable)
+
+    @property
+    def verde_host(self):
+        host = simple_config.config.get('slp_validator_verde_host', '')
+        if not host:
+            host = networks.net.SLP_VERDE_SERVERS
+            self.set_verde_host(host)
+        return host
+
+    def set_verde_host(self, host):
+        simple_config.config.set_key('slp_validator_verde_host', host)
+        host2 = simple_config.config.get('slp_validator_verde_host', '')
+
+    def update_verde_host(self, endpoint, add=False, remove=False):
+        host = simple_config.config.get('slp_validator_verde_host', '')
+        if add:
+            host.append(endpoint)
+            self.set_verde_host(host)
+        if remove:
+            if endpoint in host:
+                host.remove(endpoint)
+                self.set_verde_host(host)
+
+    @property
+    def verde_confirmations(self):
+        # stores confirmation value provided by QSlider to determine number of desired validations
+        default_confirmations = server_list_count = len(self.verde_host)
+        if server_list_count > 1:
+            # possible that one endpoint may be outdated, defaults to n-1
+            default_confirmations = server_list_count-1
+        confirmations = simple_config.config.get('slp_validator_verde_confirmations', default_confirmations)
+        # handle case for upgraded config key name
+        if not confirmations:
+            confirmations = simple_config.config.get('slp_validator_verde_confirmations', len(self.verde_host))
+            if not confirmations: self.set_verde_host(confirmations)
+        return confirmations
+
+    def set_verde_confirmations(self, amount):
+        simple_config.config.set_key('slp_validator_verde_confirmations', amount)
+
     def _emit_ui_update(self, data):
         if not self.slp_validation_fetch_signal:
             return
@@ -302,6 +348,7 @@ class _SlpGraphSearchManager:
 
         #disable slpdb validation
         self._set_slpdb_validation_enabled(False)
+        self._set_verde_validation_enabled(False)
 
         self._set_gs_enabled(enable)
 
@@ -317,8 +364,17 @@ class _SlpGraphSearchManager:
 
         self._set_slpdb_validation_enabled(enable)
 
+    def toggle_verde_validation(self, enable):
+        if self.verde_validation_enabled == enable:
+            return
+
+        self.toggle_graph_search(False)
+        self._set_slpdb_validation_enabled(not enable)
+        self._set_verde_validation_enabled(enable)
+
     def disable_validation(self):
         self._set_slpdb_validation_enabled(False)
+        self._set_verde_validation_enabled(False)
         self._set_gs_enabled(False)
 
     def remove_search_job(self, root_txid):

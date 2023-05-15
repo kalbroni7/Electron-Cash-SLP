@@ -75,7 +75,7 @@ from .contacts import Contacts
 from . import cashacct
 
 from .slp import SlpMessage, SlpParsingError, SlpUnsupportedSlpTokenType, SlpNoMintingBatonFound, OpreturnError
-from . import slp_validator_0x01, slp_validator_0x01_nft1, slp_slpdb_validator
+from . import slp_validator_0x01, slp_validator_0x01_nft1, slp_slpdb_validator, slp_verde_validator
 from .slp_graph_search import slp_gs_mgr
 
 
@@ -1868,6 +1868,17 @@ class Abstract_Wallet(PrintError, SPVDelegate):
                     tx_hash, slp_gs_mgr.slpdb_confirmations, slpdb_validation_callback
                 )
                 self.slpdb_validator.add_job(validation_job)
+            elif slp_gs_mgr.verde_validation_enabled:
+                def verde_validation_callback(validation_job):
+                    val = validation_job.validity
+                    tti['validity'] = val
+                    if slp_gs_mgr.slp_validity_signal is not None:
+                        slp_gs_mgr.slp_validity_signal.emit(validation_job.txid, val)
+
+                validation_job = slp_verde_validator.VerdeValidationJob(
+                    tx_hash, slp_gs_mgr.verde_confirmations, verde_validation_callback
+                )
+                self.verde_validator.add_job(validation_job)
             else:
                 def callback(job):
                     (txid, node), = job.nodes.items()
@@ -2665,6 +2676,7 @@ class Abstract_Wallet(PrintError, SPVDelegate):
                 self.slp_graph_0x01 = slp_validator_0x01.shared_context
                 self.slp_graph_0x01_nft = slp_validator_0x01_nft1.shared_context_nft1
                 self.slpdb_validator = slp_slpdb_validator.SLPDBValidationJobManager()
+                self.verde_validator = slp_verde_validator.VerdeValidationJobManager()
                 self.activate_slp()
                 self.network.register_callback(self._slp_callback_on_status, ['status'])
             self.start_pruned_txo_cleaner_thread()

@@ -53,6 +53,8 @@ datas = [
     (home+'electroncash/servers.json', 'electroncash'),
     (home+'electroncash/servers_slpdb.json', 'electroncash'),
     (home+'electroncash/servers_slpdb_testnet.json', 'electroncash'),
+    (home+'electroncash/servers_verde.json', 'electroncash'),
+    (home+'electroncash/servers_verde_testnet.json', 'electroncash'),
     (home+'electroncash/servers_testnet.json', 'electroncash'),
     (home+'electroncash/servers_testnet4.json', 'electroncash'),
     (home+'electroncash/servers_scalenet.json', 'electroncash'),

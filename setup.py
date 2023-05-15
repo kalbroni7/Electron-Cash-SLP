@@ -181,6 +181,8 @@ setup(
             'servers_scalenet.json',
             'servers_slpdb.json',
             'servers_slpdb_testnet.json',
+            'servers_verde.json',
+            'servers_verde_testnet.json',
             'servers_gs.json',
             'servers_gs_testnet.json',
             'servers_post_office.json',
