@@ -1857,7 +1857,7 @@ class Abstract_Wallet(PrintError, SPVDelegate):
             is_new = False
         if tti['validity'] == 0 and tti['token_id'] in self.token_types and not is_new and tti['type'] in ['SLP1','SLP65','SLP129']:
 
-            if slp_gs_mgr.slpdb_validation_enabled:
+            if slp_gs_mgr.slpdb_validation_enabled and tti['type'] == 'SLP1':
                 def slpdb_validation_callback(validation_job):
                     val = validation_job.validity
                     tti['validity'] = val
@@ -1868,7 +1868,7 @@ class Abstract_Wallet(PrintError, SPVDelegate):
                     tx_hash, slp_gs_mgr.slpdb_confirmations, slpdb_validation_callback
                 )
                 self.slpdb_validator.add_job(validation_job)
-            elif slp_gs_mgr.verde_validation_enabled:
+            elif slp_gs_mgr.verde_validation_enabled and tti['type'] == 'SLP1':
                 def verde_validation_callback(validation_job):
                     val = validation_job.validity
                     tti['validity'] = val
