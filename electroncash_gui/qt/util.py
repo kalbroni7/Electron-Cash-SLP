@@ -868,7 +868,7 @@ class OverlayControlMixin:
     def _updateOverlayPos(self):
         frame_width = self.style().pixelMetric(QStyle.PM_DefaultFrameWidth)
         overlay_size = self.overlay_widget.sizeHint()
-        x = self.rect().right() - frame_width - overlay_size.width()
+        x = int(self.rect().right() - frame_width - overlay_size.width())
         y = self.rect().bottom() - overlay_size.height()
         middle = self.middle
         if hasattr(self, 'document'):
@@ -876,7 +876,7 @@ class OverlayControlMixin:
             line_spacing = QFontMetrics(self.document().defaultFont()).lineSpacing()
             if self.rect().height() < (line_spacing * 2):
                 middle = True
-        y = (y / 2) + frame_width if middle else y - frame_width
+        y = int((y / 2) + frame_width if middle else y - frame_width)
         if hasattr(self, 'verticalScrollBar') and self.verticalScrollBar().isVisible():
             scrollbar_width = self.style().pixelMetric(QStyle.PM_ScrollBarExtent)
             x -= scrollbar_width
@@ -1167,7 +1167,7 @@ class RateLimiter(PrintError):
                 self.timer.timeout.connect(self._doIt)
                 #self.timer.destroyed.connect(lambda x=None,qn=self.qn: print(qn,"Timer deallocated"))
                 self.timer.setSingleShot(True)
-                self.timer.start(diff*1e3)
+                self.timer.start(int(diff*1e3))
                 #self.print_error("deferring")
         else:
             # We had a timer active, which means as future call will occur. So return early and let that call happenin the future.

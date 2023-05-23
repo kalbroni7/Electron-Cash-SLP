@@ -81,9 +81,9 @@ class QRCodeWidget(QWidget, util.PrintError):
         margin = 5
         framesize = min(r.width(), r.height())
         boxsize = int( (framesize - 2*margin)/k )
-        size = k*boxsize
-        left = (r.width() - size)/2
-        top = (r.height() - size)/2
+        size = int(k*boxsize)
+        left = int((r.width() - size)/2)
+        top = int((r.height() - size)/2)
 
         # Make a white margin around the QR in case of dark theme use
         qp.setBrush(self._white_brush)
