@@ -14,7 +14,7 @@ pyinstaller-hooks-contrib==2020.11 \
 pywin32-ctypes==0.2.0 \
     --hash=sha256:24ffc3b341d457d48e8922352130cf2644024a4ff09762a2261fd34c36ee5942 \
     --hash=sha256:9dc2d991b3479cc2df15930958b674a48a227d5361d413827a4cfd0b5876fc98
-setuptools==53.0.0 \
+setuptools==70.0.0 \
     --hash=sha256:0e86620d658c5ca87a71a283bd308fcaeb4c33e17792ef6f081aec17c171347f \
     --hash=sha256:1b18ef17d74ba97ac9c0e4b4265f123f07a8ae85d9cd093949fa056d3eeeead5
 six==1.14.0 \
