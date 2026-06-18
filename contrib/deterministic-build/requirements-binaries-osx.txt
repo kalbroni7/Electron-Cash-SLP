@@ -4,7 +4,7 @@ cffi==1.14.5 \
     --hash=sha256:1071534bbbf8cbb31b498d5d9db0f274f2f7a865adca4ae429e147ba40f73dea \
     --hash=sha256:2894f2df484ff56d717bead0a5c2abb6b9d2bf26d6960c4604d5c48bbc30ee73 \
     --hash=sha256:3d3dd4c9e559eb172ecf00a2a7517e97d1e96de2a5e610bd9b68cea3925b4892
-cryptography==3.3.1 \
+cryptography==46.0.5 \
     --hash=sha256:0003a52a123602e1acee177dc90dd201f9bb1e73f24a070db7d36c588e8f5c7d \
     --hash=sha256:0e85aaae861d0485eb5a79d33226dd6248d2a9f133b81532c8f5aae37de10ff7 \
     --hash=sha256:594a1db4511bc4d960571536abe21b4e5c3003e8750ab8365fafce71c5d86901 \
