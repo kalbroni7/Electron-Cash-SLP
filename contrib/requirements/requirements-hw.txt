@@ -5,3 +5,4 @@ btchip-python
 hidapi
 pyscard>=2.0.0
 pysatochip>=0.11.4
+setuptools>=70.0.0 # not directly required, pinned by Snyk to avoid a vulnerability
